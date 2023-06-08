@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Employee } from '../employee';
 import { EmployeeService } from '../employee.service';
 import { Router } from '@angular/router';
@@ -10,29 +11,46 @@ import { Router } from '@angular/router';
 })
 export class CreateEmployeeComponent implements OnInit {
 
-employee: Employee = new Employee();
+  employeeForm: FormGroup;
 
-  constructor(private employeeService: EmployeeService,
-    private router: Router) { }
+  constructor(private formBuilder: FormBuilder, private employeeService: EmployeeService, private router: Router) { }
 
   ngOnInit(): void {
+    this.employeeForm = this.formBuilder.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      emailId: ['', [Validators.required, Validators.email]]
+    });
   }
 
-  saveEmployee(){
-    this.employeeService.createEmployee(this.employee).subscribe(data =>{
-      console.log(data);
-      this.goToEmployeeList();
-    },
-    error => console.log(error));
+  saveEmployee() {
+    if (this.employeeForm.invalid) {
+      return;
+    }
+
+    const newEmployee: Employee = this.employeeForm.value;
+
+    this.employeeService.createEmployee(newEmployee).subscribe(
+      (data) => {
+        console.log(data);
+        this.goToEmployeeList();
+      },
+      (error) => console.log(error)
+    );
   }
 
-  goToEmployeeList(){
+  goToEmployeeList() {
     this.router.navigate(['/employees']);
   }
 
-  onSubmit(){
-    console.log(this.employee);
-    this.saveEmployee();
+  isFieldInvalid(fieldName: string) {
+    return (
+      this.employeeForm.get(fieldName).invalid &&
+      (this.employeeForm.get(fieldName).touched || this.employeeForm.get(fieldName).dirty)
+    );
   }
 
+  isFieldTouched(fieldName: string) {
+    return this.employeeForm.get(fieldName).touched;
+  }
 }
